@@ -18,8 +18,13 @@ def until(text):
             buffer += part
     buffer = b''
 try:
+    until(b'herdr pocket')
+    os.write(master, b'\t')
     until(b'Phone')
     os.write(master, b'\r')
+    until(b'+ Shell')
+    # Two launch actions precede the existing terminal in this space.
+    os.write(master, b'3')
     until(b'TUI-ATTACH-OK')
     os.write(master, b'typed-from-termius\r')
     until(b'typed-from-termius')

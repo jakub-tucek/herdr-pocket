@@ -15,7 +15,7 @@ export class Input {
       const s = this.pending;
       if (s.startsWith("\x1b[200~")) {
         const end = s.indexOf("\x1b[201~");
-        if (end < 0) { if (s.length > 8192) this.clear(); return; }
+        if (end < 0) { if (s.length > 1024 * 1024) this.clear(); return; }
         this.pending = s.slice(end + 6);
         this.emit({ name: "text", text: s.slice(6, end).replace(/[\r\n\x00-\x1f\x7f]/g, "") }); continue;
       }
@@ -30,10 +30,12 @@ export class Input {
         this.emit({ name: arrows[csi[1]] || "unknown" }); continue;
       }
       if (s[0] === "\x1b") {
-        if (s.length === 1 || s.startsWith("\x1b[")) {
+        if (s.length === 1) {
           this.escape = setTimeout(() => { this.pending = ""; this.emit({ name: "escape" }); }, 35);
           return;
         }
+        // Once a CSI prefix is recognized, SSH latency must not turn it into text.
+        if (s.startsWith("\x1b[")) { if (s.length > 128) this.clear(); return; }
         this.pending = s.slice(1); this.emit({ name: "escape" }); continue;
       }
       const char = String.fromCodePoint(s.codePointAt(0)!);

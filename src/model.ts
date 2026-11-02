@@ -10,7 +10,9 @@ export type Terminal = {
 };
 export type Pane = { id: string; address?: string; mod?: string; terminal?: Terminal; children: Terminal[] };
 export type Tab = { id: string; name: string; panes: Pane[] };
-export type Space = { id: string; localId: string; name: string; folder: string; machine: string; tabs: Tab[]; online: boolean };
+export type Space = { id: string; localId: string; name: string; folder: string; workspaceFolder?: string; machine: string; tabs: Tab[]; online: boolean };
+export type Checkout = { path: string; branch: string | null };
+export type Repository = { id: string; name: string; machine: string; folder: string; commonDir?: string; checkouts: Checkout[]; spaceIds: string[]; online: boolean };
 export type Machine = { name: string; state: string; temporary?: boolean };
 export type World = { spaces: Space[]; machines: Machine[]; terminals: Terminal[] };
 
@@ -55,7 +57,7 @@ export function flatten(doc: LayoutDoc, machine: string, terminals: Terminal[], 
     const first = tabs.flatMap(t => t.panes).find(p => p.terminal)?.terminal;
     const folder = first?.foreground?.cwd || first?.cwd || s.folder;
     const name = s.name || folder.replace(/\/$/, "").split("/").at(-1) || "~";
-    return { id: qualify(s.id, machine), localId: s.id, name, folder, machine, tabs, online };
+    return { id: qualify(s.id, machine), localId: s.id, name, folder, workspaceFolder: s.folder, machine, tabs, online };
   });
 }
 export function spaceTerminals(space: Space): Terminal[] {

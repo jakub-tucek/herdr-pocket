@@ -1,90 +1,108 @@
-# Herdr Pocket TUI
+# Herdr Pocket
 
-Single working repo: `~/Projects/others/herdr-pocket`.
-Installed Pocket clients, launchers, services and tmux have been removed.
-Current source is the plain SSH TUI baseline; the custom terminal view is not built yet.
+Mobile SSH terminal app for existing **herdr-core + Herdr app** sessions.
+One repo: `~/Projects/others/herdr-pocket`. No tmux, browser, HTTP service or new daemon.
 
-Relic history (all reachable in this repo):
-- `relic/pwa`: `relic/pwa`, abandoned browser/PWA version.
-- `relic/tui`: plain core-backed SSH TUI.
-- `relic/tmux`: `relic/tmux`, abandoned tmux toolbar experiment.
-
-Mobile terminal client for **herdr-core + Herdr app sessions**, over Termius/SSH.
-No browser, HTTP service, pairing key or iOS web-keyboard accessory bar.
-
-## Connect
-
-For development, install/build using the commands below. SSH to the Mac that
-owns your Herdr machine connections, then run from this repo:
-
-```sh
-pnpm start
-```
-
-Termius host: `host.example.invalid`, user `example`, port 22.
-Tailscale must be connected. Remove the old `~/.local/bin/herdr-pocket` startup
-command from Termius if you configured it; that launcher no longer exists.
-
-- Enter/tap: open a space or terminal.
-- Swipe/wheel or arrows: move through the picker.
-- `Esc`: spaces; `/`: search; `n`: new session; `w`: worktree; `?`: keys.
-- **Inside a terminal, Ctrl+\ returns to the picker.** Programs keep running.
-
-Termius owns the keyboard, scrolling, selection and clipboard while attached.
-The TUI runs `hc attach` with the real SSH TTY, not another terminal renderer.
-Each attachment fits the existing terminal to your phone; desktop views may reflow.
-
-## Shared sessions
-
-The picker reads each machine's core `herdr-app` document and live terminal facts.
-The desktop app does not need to be open. Focus/navigation stays local to this
-client. Names, tabs, splits, live terminals and attention use the shared core state.
-Native GPUI mod panes are labeled desktop-only; no fake terminal is created for them.
-
-New sessions create a core terminal and publish a tab/space into the shared layout.
-Writes use version-checked `doc.set` retries that preserve unrelated fields. Herdr
-labels are applied after publication, avoiding its automatic-adoption race.
-Desktop Herdr picks up the same terminal. Opening a session never restarts an agent.
-The default launcher is OpenCode; Shell uses the machine's core default shell.
-
-Worktrees use Git on the target machine and Herdr's usual
-`~/.herdr/worktrees/<repo>/<branch-slug>` path. No force, deletion or cleanup of
-existing work is offered. If launching fails after checkout creation, the checkout
-is kept. The TUI can list and open existing worktrees too.
-
-## CLI
-
-```sh
-node dist/main.js --list
-node dist/main.js --list --json
-node dist/main.js --attach t1f
-node dist/main.js new --program shell --machine remote --name Scratch
-node dist/main.js tree --repo ~/repo --branch phone/fix --program opencode
-```
-
-No tmux is required: core keeps every program alive after SSH disconnects.
-If you already use tmux, run this client inside it; don't run agents twice.
-The installed `herdr` TUI is unrelated and remains untouched.
-
-## Develop
-
-Node 24, pnpm 12, `hc` on PATH or `HC_BIN` pointing at it.
+## Run
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm check
 pnpm build
 pnpm test
-pnpm start
+pnpm install:cli
+~/.local/bin/herdr-pocket
 ```
 
-Tests use a separate core/session, scratch HOME/XDG paths, real Git and a real
-pseudo-terminal. They check shared-layout writes, concurrent edits, terminal
-launch, worktrees, raw input, attachment, detach, resize and TTY restoration.
-They never stop or restart the user's core. Python 3 is needed for the PTY test.
+Requires Node 24, pnpm 12 and `hc` (`~/.local/bin/hc`, PATH, or `HC_BIN`).
+The installer pins the current Node path so SSH does not need an interactive shell
+setup. Re-run `pnpm install:cli` if that Node installation moves.
 
-State: `~/.local/state/herdr-pocket-tui/view.json` (selected space/pane only).
-The only running client is the foreground TUI; no new daemon or listening port.
+In Termius, connect through Tailscale:
+- Host: `host.example.invalid`
+- User: `example`, port `22`
+- Startup command: `~/.local/bin/herdr-pocket`
 
-Use `git show relic/pwa:README.md` or `git show relic/tmux:tmux.conf` to inspect
-past experiments without restoring their installations.
+## Repos and sessions
+
+**Repo → + OpenCode / + Shell** creates and opens a session in two selections.
+No folder/name wizard. Repositories are detected from shared spaces, live terminal
+directories and a bounded search of conventional project folders. Git common-dir
+identity groups worktrees of the same repo; machines remain separate.
+
+- **Repos**: repository groups, existing sessions, checkout selection.
+- **Spaces**: every shared Herdr space, including non-Git folders and split panes.
+- **+ Worktree**: creates a unique `pocket/...` branch from HEAD and opens OpenCode
+  in a new shared workspace. Select an existing checkout to launch there instead.
+- **Tab** switches Repos/Spaces; **Enter**, **1–9**, or mouse press opens a row.
+- **↑/↓** or **j/k** moves; **Esc** goes back; **/** searches; **r** rediscovers.
+- Within a repo/space: **o/n** OpenCode, **s** shell, **w** worktree (repo only).
+- **q** quits. Programs remain alive in core.
+
+World state refreshes every two seconds while browsing. Repo discovery runs on
+entry, manual refresh and periodically. Remote failures leave cached repos/spaces
+visible as offline. New tabs/spaces publish into the same `herdr-app` document
+using version-checked writes, preserving concurrent changes and unknown fields.
+Opening an existing session never starts another agent. The desktop need not be open.
+Desktop-only mod panels are labeled, not replaced by fake terminals.
+
+## Custom terminal
+
+Pocket runs `hc attach` in a private PTY and renders its output through a headless
+xterm screen buffer. Apps can clear, scroll, switch alternate screens and resize
+without overwriting Pocket's two pinned bottom rows.
+
+| Control | Action |
+| --- | --- |
+| **‹ Picker** | Detach this view; return to sessions |
+| **Ctrl+]** or **Ctrl+\** | Keyboard return, including clients without touch mouse events |
+| **Esc / Tab** | Send the key to the app |
+| **↑ / ↓** toolbar | Scroll history; Page Up/Down in alternate-screen apps |
+| **Live** or title row | Return to live output |
+
+Buttons disappear from the right when the screen is too narrow; Picker stays.
+Wheel events go to mouse-aware apps, otherwise scroll Pocket's history.
+Color, Unicode, cursor, arrows and bracketed paste are preserved. Typing returns
+to live output. Resizing fits the shared core terminal to the phone, so other
+attached views can reflow.
+
+**Touch requires terminal mouse events.** Termius may use finger taps for its own
+gestures rather than send mouse clicks. Pocket cannot change an SSH client's
+gesture handling. Number keys work throughout the picker; Ctrl+] returns from
+the terminal. The automated mouse tests verify the emitted terminal protocol,
+not Termius's iOS gesture implementation.
+
+SSH disconnect stops this Pocket client and its attachment, not the core program.
+Reconnect and pick the same session. Local selection is saved in
+`~/.local/state/herdr-pocket-tui/view.json`.
+
+## CLI
+
+```sh
+herdr-pocket --list --json
+herdr-pocket --repos --json
+herdr-pocket --attach t1f
+herdr-pocket new --program shell --machine remote --name Scratch
+herdr-pocket tree --repo ~/repo --branch phone/fix --program opencode
+```
+
+## Validation
+
+`pnpm test` requires Python 3 and uses isolated core instances, scratch HOME/XDG
+paths, real Git repositories and PTYs. It checks publication conflicts, repo and
+worktree grouping, exact workspace reuse, two-click shell creation, live sync from
+another client, terminal input/rendering/resize, mouse and keyboard return, hangup,
+TTY restoration and survival of underlying sessions. It never stops the user's core.
+
+`node-pty` is the native dependency. `scripts/setup-pty.mjs` fixes the missing
+executable bit on its published macOS helper during install.
+
+## Relics
+
+All experiments remain reachable in this repo's Git history:
+- `relic/pwa`: `relic/pwa`, abandoned PWA.
+- `relic/tui`: original plain SSH picker.
+- `relic/tmux`: `relic/tmux`, abandoned tmux toolbar.
+
+Those old installations were removed. The current app installs only the
+`~/.local/bin/herdr-pocket` launcher; no service, proxy or port mapping.
