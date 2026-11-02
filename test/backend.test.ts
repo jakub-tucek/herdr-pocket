@@ -13,6 +13,9 @@ test("real isolated hc: shared docs, CAS conflict, launch, worktree, native atta
   const env = { ...process.env, HOME: join(scratch, "home"), HC_BIN: hc, HC_SESSION: "p", XDG_STATE_HOME: join(scratch, "state"), XDG_CONFIG_HOME: join(scratch, "config"), XDG_RUNTIME_DIR: join(scratch, "run") };
   await mkdir(env.HOME); await mkdir(env.XDG_RUNTIME_DIR, { mode: 0o700 });
   const control = new Core(hc, env);
+  const exec = promisify(execFile);
+  const tmux = process.env.POCKET_TMUX || "/opt/homebrew/bin/tmux";
+  const socket = join(scratch, "tmux.sock");
   let injectConflict = false, conflicts = 0;
   const backend = new Backend(() => {
     const core = new Core(hc, env), rpc = core.rpc.bind(core);
@@ -50,7 +53,6 @@ test("real isolated hc: shared docs, CAS conflict, launch, worktree, native atta
     assert.equal((await backend.world()).spaces[0].tabs.length, 2);
     await assert.rejects(backend.launch({ machine: "", space: "missing", folder: env.HOME, program: "shell" }), /Space closed/);
     const repo = join(scratch, "repo");
-    const exec = promisify(execFile);
     await exec("git", ["init", "--initial-branch=main", repo], { env });
     await exec("git", ["-C", repo, "-c", "user.name=Pocket", "-c", "user.email=test@example.invalid", "commit", "--allow-empty", "-m", "seed"], { env });
     const checkout = await backend.newWorktree(repo, "phone/test", "HEAD", "");
@@ -64,8 +66,12 @@ test("real isolated hc: shared docs, CAS conflict, launch, worktree, native atta
     const root = join(dirname(fileURLToPath(import.meta.url)), "..");
     const result = await exec("python3", [join(root, "test/tty_driver.py"), process.execPath, join(root, "dist/main.js")], { env, timeout: 30000 });
     assert.equal(JSON.parse(result.stdout).tty_restored, true);
+    const mouse = await exec("python3", [join(root, "test/tty_driver.py"), process.execPath, join(root, "dist/main.js"), tmux, socket, join(root, "tmux.conf")], { env: { ...env, TERM: "xterm-256color" }, timeout: 30000 });
+    assert.equal(JSON.parse(mouse.stdout).tty_restored, true);
+    assert.equal(JSON.parse(mouse.stdout).picker_button, true);
     assert.equal((await control.rpc("terminal.get", { terminal: terminal.address })).state, "live", "Leaving the TUI must not kill the program");
   } finally {
+    await exec(tmux, ["-S", socket, "kill-server"], { env }).catch(() => {});
     backend.close();
     try { await control.rpc("server.stop"); } catch {}
     control.close();

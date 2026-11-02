@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+NODE=${POCKET_NODE:-node}
+# CLI output and an explicit escape hatch need no tmux client.
+if [ "${1:-}" = --direct ]; then
+  shift
+  exec "$NODE" "$ROOT/dist/main.js" "$@"
+fi
+if [ "$#" -gt 0 ] || [ ! -t 0 ] || [ ! -t 1 ]; then
+  exec "$NODE" "$ROOT/dist/main.js" "$@"
+fi
+TMUX_BIN=${POCKET_TMUX:-/opt/homebrew/bin/tmux}
+if [ ! -x "$TMUX_BIN" ]; then TMUX_BIN=tmux; fi
+# Deliberately use a separate server, even when launched from another tmux.
+unset TMUX
+exec "$TMUX_BIN" -L herdr-pocket -f "$ROOT/tmux.conf" new-session -A -s pocket "$NODE" "$ROOT/dist/main.js"
