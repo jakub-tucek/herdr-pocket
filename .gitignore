@@ -1,0 +1,5 @@
+node_modules/
+public/app.js
+public/xterm.css
+public/version.json
+.DS_Store

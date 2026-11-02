@@ -1,0 +1,26 @@
+{
+  "name": "herdr-pocket",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "scripts": {
+    "build": "node --import tsx scripts/build.ts",
+    "start": "node --import tsx server.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:browser": "node --import tsx test/browser-smoke.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/xterm": "5.5.0",
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "@types/ws": "8.18.1",
+    "esbuild": "0.25.12",
+    "playwright-core": "1.56.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

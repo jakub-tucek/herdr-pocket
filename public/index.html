@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#17161e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Herdr Pocket</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="/xterm.css">
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <section id="pair" hidden>
+    <form id="pair-form"><img src="/icon.svg" width="64" height="64" alt=""><h1>Herdr Pocket</h1>
+      <label for="key">Pairing key</label>
+      <input id="key" type="password" autocomplete="off" required><button>Connect</button><p id="pair-error" role="alert"></p>
+    </form>
+  </section>
+  <div id="app" hidden>
+    <aside id="sidebar"><header><strong>Herdr Pocket</strong><div class="header-actions"><button id="new-session" aria-label="New session" title="New session">+</button><details id="overview-menu"><summary aria-label="More options">⋯</summary><div class="terminal-options"><button id="refresh">Refresh</button><button id="logout">Unpair</button></div></details></div></header>
+      <input id="search" type="search" placeholder="Search" aria-label="Search sessions">
+      <nav id="spaces" aria-label="Open sessions"></nav><p id="connection" role="status" hidden></p>
+    </aside>
+    <main><header id="toolbar"><button id="back" aria-label="Back to spaces">‹</button><div id="title">Pick a terminal</div><button id="direct-shortcuts" aria-label="Toggle terminal shortcuts" aria-pressed="false" hidden>⌘</button><button id="mode" disabled>Control</button><details id="terminal-menu"><summary aria-label="Terminal options">⋯</summary><div class="terminal-options"><button id="new-session-menu">New session</button><button id="upload-file">Upload file</button><button id="paste-file">Paste file</button><button id="fit" aria-pressed="false" title="Resizes the shared terminal, including its desktop view.">Fit screen</button><button id="keyboard" disabled aria-pressed="false" title="Switch to direct terminal typing">Terminal</button></div></details></header>
+      <div id="notice" role="status" hidden></div>
+      <div id="terminal-scroll"><div id="terminal"></div></div>
+      <input id="upload-input" type="file" multiple hidden>
+      <div id="keys" role="toolbar" aria-label="Terminal keys" hidden><button data-key="\u001b">Esc</button><button data-key="\t">Tab</button><button id="ctrl" aria-pressed="false" title="Send the next letter as Ctrl+letter">Ctrl</button><button data-key="\u001b[A" aria-label="Up">↑</button><button data-key="\u001b[B" aria-label="Down">↓</button><button data-key="\r" aria-label="Enter">↵</button></div>
+      <form id="compose" autocomplete="off" hidden><button id="show-keys" type="button" aria-label="Toggle terminal shortcuts" aria-pressed="false" title="Terminal shortcuts">⌘</button><textarea id="message" name="terminal-message" rows="1" placeholder="Message…" aria-label="Message to terminal" enterkeyhint="send" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea><button id="send-message" aria-label="Send message" title="Send message">↑</button></form>
+    </main>
+  </div>
+  <dialog id="new-dialog" aria-labelledby="new-heading"><form id="new-form" autocomplete="off">
+    <h2 id="new-heading">New session</h2>
+    <fieldset id="new-fields">
+      <label>Program<select id="new-program"><option value="opencode">OpenCode</option><option value="shell">Shell</option></select></label>
+      <label>Space<select id="new-space"><option value="">New space</option></select></label>
+      <label id="new-machine-row">Machine<select id="new-machine"><option value="">Mac</option></select></label>
+      <label>Name<input id="new-name" maxlength="120" placeholder="Optional"></label>
+      <label id="new-folder-row">Folder<input id="new-folder" placeholder="~/project" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+      <label class="check-row"><input id="new-use-worktree" type="checkbox">Worktree</label>
+      <section id="new-worktree-fields" hidden>
+        <label>Repo<span class="repo-input"><input id="new-repo" placeholder="~/project" autocapitalize="off" autocorrect="off" spellcheck="false"><button id="new-load-worktrees" type="button" aria-label="Load worktrees">↻</button></span></label>
+        <label>Worktree<select id="new-checkout"><option value="new">New worktree</option></select></label>
+        <label id="new-branch-row">Branch<input id="new-branch" maxlength="200" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+        <label id="new-base-row">From<input id="new-base" maxlength="200" placeholder="HEAD" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+      </section>
+    </fieldset>
+    <p id="new-error" role="alert"></p>
+    <div class="dialog-actions"><button id="new-cancel" type="button">Cancel</button><button id="new-create" type="submit">Create</button></div>
+  </form></dialog>
+  <div id="update-banner" role="status" aria-live="polite" hidden>
+    <span><strong>Update ready</strong></span>
+    <button id="update-refresh">Refresh</button><button id="update-later" aria-label="Dismiss update until next visit">Later</button>
+  </div>
+</body>
+</html>

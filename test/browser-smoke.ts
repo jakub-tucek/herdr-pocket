@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { chromium } from "playwright-core";
+import type { World } from "../model";
+
+// Read-only smoke check of the live install. Never enter Control or send keys.
+const base = process.env.POCKET_URL || "http://127.0.0.1:8790";
+const browser = await chromium.launch({ executablePath: process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
+const errors: string[] = [];
+try {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  // Live smoke tests must never resize the user's terminals, even on mobile.
+  await context.addInitScript(() => { localStorage.setItem("fitTerminal", "0"); localStorage.setItem("inputMode", "watch"); });
+  const page = await context.newPage();
+  page.on("pageerror", error => errors.push(error.message));
+  let frames = 0;
+  page.on("websocket", ws => ws.on("framereceived", event => { if (typeof event.payload !== "string") frames++; }));
+  await page.goto(base);
+  await page.locator("#pair").waitFor({ state: "visible" });
+  const key = (await readFile(`${process.env.HOME}/.config/herdr-pocket/pairing-key`, "utf8")).trim();
+  await page.locator("#key").fill(key);
+  await page.locator("#pair-form button").click();
+  await page.locator("#app").waitFor({ state: "visible" });
+  assert.ok(await page.locator(".space").count() > 0);
+  assert.equal(await page.locator(".session").count(), 0, "Overview should start collapsed");
+  assert.equal(await page.locator("#logout").isVisible(), false);
+  await page.locator("#overview-menu summary").click();
+  assert.equal(await page.locator("#logout").isVisible(), true);
+  await page.locator("#overview-menu summary").click();
+  await page.locator("#new-session").click();
+  await page.waitForFunction(() => !(document.getElementById("new-fields") as HTMLFieldSetElement).disabled);
+  assert.ok(await page.locator("#new-space option").count() > 1);
+  assert.ok(await page.locator("#new-machine option").count() > 1);
+  await page.locator("#new-cancel").click();
+  const world: World = await page.evaluate(() => fetch("/api/world").then(r => r.json()));
+  const remote = world.spaces.find(s => s.machine && s.tabs.some(t => t.terminals.length));
+  const local = world.spaces.find(s => !s.machine && s.tabs.some(t => t.terminals.length));
+  assert.ok(remote && local, "Smoke check expects a local and SSH terminal");
+  const remoteAddress = remote.tabs.flatMap(t => t.terminals)[0].terminal;
+  const localAddress = local.tabs.flatMap(t => t.terminals)[0].terminal;
+  const byAddress = (address: string) => page.locator(".session").filter({ has: page.locator(".address", { hasText: new RegExp(`^${address.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }) });
+  const screenshot = `${process.env.POCKET_SCREENSHOT_DIR || "/tmp"}/herdr-pocket-mobile.png`;
+  await page.screenshot({ path: screenshot.replace("mobile", "overview") });
+  await page.locator(".space-name").nth(world.spaces.indexOf(remote)).click();
+  await byAddress(remoteAddress).click();
+  await page.waitForFunction(() => document.getElementById("app")?.dataset.terminalState === "watch");
+  await page.waitForFunction(() => !!document.querySelector(".xterm-rows")?.textContent?.trim());
+  assert.ok(frames > 0, "No terminal output received");
+  assert.equal(await page.locator("#compose").isVisible(), false);
+  assert.equal(await page.locator("#mode").textContent(), "Control");
+  await page.screenshot({ path: screenshot });
+  await page.locator("#back").click();
+  await page.locator("#search").fill(local.name);
+  assert.ok(await page.locator(".space").count() > 0);
+  await page.locator("#search").fill("");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator(".space-name").nth(world.spaces.indexOf(local)).click();
+  await byAddress(localAddress).click();
+  await page.waitForFunction(() => document.getElementById("app")?.dataset.terminalState === "watch");
+  await page.screenshot({ path: screenshot.replace("mobile", "desktop") });
+  assert.deepEqual(errors, []);
+  console.log(JSON.stringify({ base, spaces: await page.locator(".space").count(), binaryFrames: frames, screenshots: screenshot, errors }));
+} finally { await browser.close(); }
