@@ -1,18 +1,29 @@
 # Herdr Pocket TUI
 
+Single working repo: `~/Projects/others/herdr-pocket`.
+Installed Pocket clients, launchers, services and tmux have been removed.
+Current source is the plain SSH TUI baseline; the custom terminal view is not built yet.
+
+Relic history (all reachable in this repo):
+- `relic/pwa`: `relic/pwa`, abandoned browser/PWA version.
+- `relic/tui`: plain core-backed SSH TUI.
+- `relic/tmux`: `relic/tmux`, abandoned tmux toolbar experiment.
+
 Mobile terminal client for **herdr-core + Herdr app sessions**, over Termius/SSH.
 No browser, HTTP service, pairing key or iOS web-keyboard accessory bar.
 
 ## Connect
 
-SSH to the Mac that owns your Herdr machine connections, then run:
+For development, install/build using the commands below. SSH to the Mac that
+owns your Herdr machine connections, then run from this repo:
 
 ```sh
-~/.local/bin/herdr-pocket
+pnpm start
 ```
 
 Termius host: `host.example.invalid`, user `example`, port 22.
-Tailscale must be connected. Set the command above as the host's startup command.
+Tailscale must be connected. Remove the old `~/.local/bin/herdr-pocket` startup
+command from Termius if you configured it; that launcher no longer exists.
 
 - Enter/tap: open a space or terminal.
 - Swipe/wheel or arrows: move through the picker.
@@ -44,11 +55,11 @@ is kept. The TUI can list and open existing worktrees too.
 ## CLI
 
 ```sh
-herdr-pocket --list
-herdr-pocket --list --json
-herdr-pocket --attach t1f
-herdr-pocket new --program shell --machine remote --name Scratch
-herdr-pocket tree --repo ~/repo --branch phone/fix --program opencode
+node dist/main.js --list
+node dist/main.js --list --json
+node dist/main.js --attach t1f
+node dist/main.js new --program shell --machine remote --name Scratch
+node dist/main.js tree --repo ~/repo --branch phone/fix --program opencode
 ```
 
 No tmux is required: core keeps every program alive after SSH disconnects.
@@ -75,4 +86,5 @@ They never stop or restart the user's core. Python 3 is needed for the PTY test.
 State: `~/.local/state/herdr-pocket-tui/view.json` (selected space/pane only).
 The only running client is the foreground TUI; no new daemon or listening port.
 
-Archived PWA: `../herdr-pocket`, checkpoint commit `relic/pwa`.
+Use `git show relic/pwa:README.md` or `git show relic/tmux:tmux.conf` to inspect
+past experiments without restoring their installations.
