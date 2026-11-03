@@ -6,6 +6,10 @@ A mobile-friendly terminal CLI built in Rust. Connect through **Termius** or
 another SSH client, run `herdr-pocket`, and pick up the same shell or coding-agent
 session you use in **Herdr app**. No duplicate agent or separate workspace setup.
 
+![Herdr Pocket terminal UI: shared workspaces and a workspace's running sessions with OpenCode and Shell actions](docs/images/herdr-pocket.png)
+
+*Actual terminal UI with sample workspace data, shown at 44 columns.*
+
 - **Shared sessions:** use the existing terminals managed by herdr-core.
 - **Shared workspaces:** browse Herdr spaces, tabs and split-pane terminals.
 - **Two-step creation:** choose a repo, then OpenCode or Shell.
