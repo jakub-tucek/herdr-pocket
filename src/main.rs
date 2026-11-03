@@ -3,6 +3,7 @@ mod core;
 mod model;
 mod terminal;
 mod tui;
+mod updater;
 
 use anyhow::{Context, Result, bail};
 use std::{

@@ -67,6 +67,20 @@ Runtime needs only that binary and `hc` (`~/.local/bin/hc`, PATH, or `HC_BIN`).
 Install OpenCode on each target machine where you want to use **+ OpenCode**.
 Python 3 is needed for the tests below, not for running Pocket.
 
+## Updates
+
+Pocket checks GitHub's `main` branch in the background when the picker opens.
+When a newer build is available, tap **Update** or press **u**. Pocket downloads
+that commit into a temporary checkout, builds it, and atomically replaces the
+running binary. Tap **Restart** or press **u** again to use the new build.
+Your core sessions keep running throughout.
+
+Updates require `git`, `cargo`, network access, and permission to replace the
+binary. Keep Pocket open while it builds. Failed updates leave the current
+binary intact and show an error with a retry button. Offline checks stay quiet.
+The updater does not modify your source checkout. Builds without an embedded
+Git revision do not check for updates.
+
 ## Repos and sessions
 
 **Repo → + OpenCode / + Shell** creates and opens a session in two selections.

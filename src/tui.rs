@@ -817,6 +817,8 @@ struct Opened {
     checkout: Option<(String, String)>,
 }
 enum Reply {
+    UpdateChecked(Option<String>),
+    Updated(Result<()>),
     World(Result<World>),
     Repos(Result<Vec<Repository>>),
     Open(Result<Opened>),
@@ -938,6 +940,16 @@ fn run_picker(
     picker: &mut Picker,
 ) -> Result<()> {
     let mut screen = Some(Screen::enter()?);
+    // On Linux current_exe points to a deleted inode after atomic replacement.
+    let restart_executable = std::env::current_exe()?;
+    let update_tx = tx.clone();
+    thread::spawn(move || {
+        let _ = update_tx.send(Reply::UpdateChecked(crate::updater::check().ok().flatten()));
+    });
+    let mut update_revision = None;
+    let mut updating = false;
+    let mut updated = false;
+    let mut update_error = false;
     let mut next_world = Instant::now();
     let mut next_discovery = Instant::now();
     let mut want_discovery = true;
@@ -947,6 +959,17 @@ fn run_picker(
         let mut attach = None;
         while let Ok(reply) = rx.try_recv() {
             match reply {
+                Reply::UpdateChecked(revision) => update_revision = revision,
+                Reply::Updated(result) => {
+                    updating = false;
+                    match result {
+                        Ok(()) => updated = true,
+                        Err(error) => {
+                            update_error = true;
+                            picker.message = format!("Update failed: {error}");
+                        }
+                    }
+                }
                 Reply::World(result) => {
                     picker.loading = false;
                     match result {
@@ -1054,7 +1077,19 @@ fn run_picker(
             next_world = Instant::now() + Duration::from_secs(2);
         }
         let (width, height) = terminal::size().unwrap_or((80, 24));
-        let lines = picker.screen(width as usize, height as usize);
+        let mut lines = picker.screen(width as usize, height as usize);
+        if width >= 12 && height >= 6 && update_revision.is_some() {
+            let label = if updated {
+                "[u Restart] Update installed"
+            } else if updating {
+                "Updating… building Rust binary"
+            } else if update_error {
+                "[u Retry update] See error below"
+            } else {
+                "[u Update] New Pocket available"
+            };
+            lines[2] = format!("\x1b[1;36m{}\x1b[0m", pad(label, width as usize));
+        }
         let rendered = (width, height, lines);
         if last_screen.as_ref() != Some(&rendered) {
             let mut stdout = io::stdout().lock();
@@ -1096,6 +1131,29 @@ fn run_picker(
         }
         if picker.help {
             picker.help = false;
+            continue;
+        }
+        let update_pressed = matches!(event, Event::Key(key) if key.code == KeyCode::Char('u'))
+            || matches!(event, Event::Mouse(mouse) if mouse.row == 2 && mouse.kind == MouseEventKind::Down(MouseButton::Left));
+        if update_pressed && let Some(revision) = update_revision.as_ref() {
+            if updated {
+                use std::os::unix::process::CommandExt;
+                save(&picker.saved);
+                drop(screen.take());
+                backend.close();
+                let error = std::process::Command::new(&restart_executable).exec();
+                return Err(error.into());
+            }
+            if !updating {
+                updating = true;
+                update_error = false;
+                picker.message.clear();
+                let revision = revision.clone();
+                let tx = tx.clone();
+                thread::spawn(move || {
+                    let _ = tx.send(Reply::Updated(crate::updater::install(&revision)));
+                });
+            }
             continue;
         }
         let mut row = None;
