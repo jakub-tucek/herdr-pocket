@@ -1,11 +1,15 @@
 # Herdr Pocket
 
 Mobile SSH terminal app for existing **herdr-core + Herdr app** sessions.
-One repo: `~/Projects/others/herdr-pocket`. No tmux, browser, HTTP service or new daemon.
+Browse synced workspaces, launch coding sessions in two selections, and use them
+through a phone-sized terminal with persistent navigation. No tmux, browser,
+HTTP service or new daemon.
 
 ## Run
 
 ```sh
+git clone git@github.com:jakub-tucek/herdr-pocket.git
+cd herdr-pocket
 pnpm install --frozen-lockfile
 pnpm check
 pnpm build
@@ -18,10 +22,14 @@ Requires Node 24, pnpm 12 and `hc` (`~/.local/bin/hc`, PATH, or `HC_BIN`).
 The installer pins the current Node path so SSH does not need an interactive shell
 setup. Re-run `pnpm install:cli` if that Node installation moves.
 
-In Termius, connect through Tailscale:
-- Host: `host.example.invalid`
-- User: `example`, port `22`
+In Termius, SSH into the machine that owns your Herdr sessions and connections
+(over Tailscale or your usual SSH network):
+- Host: that machine's hostname or IP
+- User: your SSH username; port `22` unless configured otherwise
 - Startup command: `~/.local/bin/herdr-pocket`
+
+With `~/.local/bin` on PATH, run `herdr-pocket` directly. No alias needed.
+Install OpenCode on each target machine to use the **+ OpenCode** action.
 
 ## Repos and sessions
 
