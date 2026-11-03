@@ -1,33 +1,71 @@
 # Herdr Pocket
 
-Mobile SSH terminal app for existing **herdr-core + Herdr app** sessions.
-Browse synced workspaces, launch coding sessions in two selections, and use them
-through a phone-sized terminal with persistent navigation. One Rust binary.
-No Node, tmux, browser, HTTP service or new daemon. Supports macOS and Linux.
+**Your Herdr workspaces and running sessions, from your phone.**
 
-## Run
+A mobile-friendly terminal CLI built in Rust. Connect through **Termius** or
+another SSH client, run `herdr-pocket`, and pick up the same shell or coding-agent
+session you use in **Herdr app**. No duplicate agent or separate workspace setup.
+
+- **Shared sessions:** use the existing terminals managed by herdr-core.
+- **Shared workspaces:** browse Herdr spaces, tabs and split-pane terminals.
+- **Two-step creation:** choose a repo, then OpenCode or Shell.
+- **Phone-sized controls:** compact lists, numbered shortcuts and a pinned Picker bar.
+- **Persistent programs:** disconnect SSH and reconnect later; core keeps them running.
+
+One native binary for macOS and Linux. No Node, tmux, browser or Pocket server.
+
+## Connect from your phone
+
+Once Pocket is installed on your Herdr host:
+
+1. Open **Termius** and SSH into the machine where you use Herdr, with the same
+   user account. Use Tailscale or your usual SSH network.
+2. Run:
+
+   ```sh
+   ~/.local/bin/herdr-pocket
+   ```
+
+3. Choose a repository, or press **Tab** for **Spaces** to browse your shared
+   Herdr workspaces. Open a terminal to continue where you left off.
+
+Set `~/.local/bin/herdr-pocket` as the host's **startup command** in Termius to
+open Pocket whenever you connect. With `~/.local/bin` on PATH, `herdr-pocket`
+works directly too.
+
+**Return to the picker:** press **Ctrl+]**, or tap **‹ Picker** if your SSH client
+forwards mouse events. Use number keys to select rows when taps aren't forwarded.
+
+## What stays in sync with Herdr app?
+
+Pocket reads the same shared layout and connects to the same core terminals.
+Existing spaces, tabs, terminal titles and agent status appear in Pocket. Sessions
+and workspaces created in Pocket appear in Herdr app too. The desktop app does
+not need to stay open.
+
+The presentation is adapted for a phone: split-pane terminals become selectable
+rows, and **Repos** groups workspaces by detected Git repository. Desktop-only
+mod panels are labeled but cannot be opened in Pocket. Navigation and selection
+stay local to each client.
+
+Connect to the Herdr host that owns your remote-machine connections to see those
+machines too. A different SSH account or a separate core instance has its own state.
+
+## Install on your Herdr host
+
+Requires a recent stable Rust toolchain (edition 2024) and an installed
+[herdr-core](https://github.com/herdrdev/herdr-core) with `hc` available.
 
 ```sh
-git clone git@github.com:jakub-tucek/herdr-pocket.git
+git clone https://github.com/jakub-tucek/herdr-pocket.git
 cd herdr-pocket
-cargo test --locked
 ./scripts/install.sh
-~/.local/bin/herdr-pocket
 ```
 
-Build with a recent stable Rust toolchain (edition 2024). Runtime needs only
-the binary and `hc` (`~/.local/bin/hc`, PATH, or `HC_BIN`). Python 3 is needed
-for tests, not for running Pocket. The installer atomically replaces
-`~/.local/bin/herdr-pocket` with the release binary; no shell/runtime wrapper.
-
-In Termius, SSH into the machine that owns your Herdr sessions and connections
-(over Tailscale or your usual SSH network):
-- Host: that machine's hostname or IP
-- User: your SSH username; port `22` unless configured otherwise
-- Startup command: `~/.local/bin/herdr-pocket`
-
-With `~/.local/bin` on PATH, run `herdr-pocket` directly. No alias needed.
-Install OpenCode on each target machine to use the **+ OpenCode** action.
+The installer builds a release binary and installs it at `~/.local/bin/herdr-pocket`.
+Runtime needs only that binary and `hc` (`~/.local/bin/hc`, PATH, or `HC_BIN`).
+Install OpenCode on each target machine where you want to use **+ OpenCode**.
+Python 3 is needed for the tests below, not for running Pocket.
 
 ## Repos and sessions
 
@@ -115,5 +153,5 @@ All experiments remain reachable in this repo's Git history:
 - `relic/tmux`: abandoned tmux toolbar.
 - `relic/node`: last Node implementation before the Rust port.
 
-Those old installations were removed. The current app installs only the
-`~/.local/bin/herdr-pocket` launcher; no service, proxy or port mapping.
+The current app installs only the `~/.local/bin/herdr-pocket` binary;
+no service, proxy or port mapping.
