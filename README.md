@@ -108,9 +108,9 @@ executable bit on its published macOS helper during install.
 ## Relics
 
 All experiments remain reachable in this repo's Git history:
-- `relic/pwa`: `relic/pwa`, abandoned PWA.
+- `relic/pwa`: abandoned PWA.
 - `relic/tui`: original plain SSH picker.
-- `relic/tmux`: `relic/tmux`, abandoned tmux toolbar.
+- `relic/tmux`: abandoned tmux toolbar.
 
 Those old installations were removed. The current app installs only the
 `~/.local/bin/herdr-pocket` launcher; no service, proxy or port mapping.
