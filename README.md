@@ -2,25 +2,23 @@
 
 Mobile SSH terminal app for existing **herdr-core + Herdr app** sessions.
 Browse synced workspaces, launch coding sessions in two selections, and use them
-through a phone-sized terminal with persistent navigation. No tmux, browser,
-HTTP service or new daemon.
+through a phone-sized terminal with persistent navigation. One Rust binary.
+No Node, tmux, browser, HTTP service or new daemon. Supports macOS and Linux.
 
 ## Run
 
 ```sh
 git clone git@github.com:jakub-tucek/herdr-pocket.git
 cd herdr-pocket
-pnpm install --frozen-lockfile
-pnpm check
-pnpm build
-pnpm test
-pnpm install:cli
+cargo test --locked
+./scripts/install.sh
 ~/.local/bin/herdr-pocket
 ```
 
-Requires Node 24, pnpm 12 and `hc` (`~/.local/bin/hc`, PATH, or `HC_BIN`).
-The installer pins the current Node path so SSH does not need an interactive shell
-setup. Re-run `pnpm install:cli` if that Node installation moves.
+Build with a recent stable Rust toolchain (edition 2024). Runtime needs only
+the binary and `hc` (`~/.local/bin/hc`, PATH, or `HC_BIN`). Python 3 is needed
+for tests, not for running Pocket. The installer atomically replaces
+`~/.local/bin/herdr-pocket` with the release binary; no shell/runtime wrapper.
 
 In Termius, SSH into the machine that owns your Herdr sessions and connections
 (over Tailscale or your usual SSH network):
@@ -56,8 +54,8 @@ Desktop-only mod panels are labeled, not replaced by fake terminals.
 
 ## Custom terminal
 
-Pocket runs `hc attach` in a private PTY and renders its output through a headless
-xterm screen buffer. Apps can clear, scroll, switch alternate screens and resize
+Pocket runs `hc attach` through `portable-pty`, parses its output with `vt100`,
+and renders via `crossterm`. Apps can clear, scroll, switch alternate screens and resize
 without overwriting Pocket's two pinned bottom rows.
 
 | Control | Action |
@@ -96,14 +94,18 @@ herdr-pocket tree --repo ~/repo --branch phone/fix --program opencode
 
 ## Validation
 
-`pnpm test` requires Python 3 and uses isolated core instances, scratch HOME/XDG
+`cargo test --locked` requires Python 3 and `hc`, and uses isolated core instances, scratch HOME/XDG
 paths, real Git repositories and PTYs. It checks publication conflicts, repo and
 worktree grouping, exact workspace reuse, two-click shell creation, live sync from
 another client, terminal input/rendering/resize, mouse and keyboard return, hangup,
 TTY restoration and survival of underlying sessions. It never stops the user's core.
 
-`node-pty` is the native dependency. `scripts/setup-pty.mjs` fixes the missing
-executable bit on its published macOS helper during install.
+```sh
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test --locked
+cargo build --release --locked
+```
 
 ## Relics
 
@@ -111,6 +113,7 @@ All experiments remain reachable in this repo's Git history:
 - `relic/pwa`: abandoned PWA.
 - `relic/tui`: original plain SSH picker.
 - `relic/tmux`: abandoned tmux toolbar.
+- `relic/node`: last Node implementation before the Rust port.
 
 Those old installations were removed. The current app installs only the
 `~/.local/bin/herdr-pocket` launcher; no service, proxy or port mapping.
